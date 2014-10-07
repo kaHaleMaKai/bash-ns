@@ -1,7 +1,5 @@
-source extended-builtins.sh
-
-function require-argument {
-  export-into-ns required_args="${required_args} ${1}"
+require-argument () {
+  export required_args="${required_args} ${1}"
 }
 
 function require-arguments() {
@@ -27,23 +25,16 @@ private; function undash() {
      echo "${1}" | sed 's/^-\+//g'
 }
 
-private; function export-into-ns-cli-arg() {
-  while (( $# )); do
-    export-into-ns "\$(${*})"
-    shift
-  done
-}
-
 function parse-arguments() {
   while (( "$#" )); do
     arg="$1"
     echo "${arg}" |  grep '^\-\-[a-z_]\+=[a-zA-Z_.0-9\-]\+$' > /dev/null
     if [ $? -eq 0 ]; then
-      export-into-ns $(undash ${arg})
+      export $(undash ${arg})
     else
       echo "${arg}" |  grep '^\-\-[a-z_]\+$' > /dev/null
       if [ $? -eq 0 ]; then
-        export-into-ns $(undash ${arg}=1)
+        export $(undash ${arg}=1)
       else
         echo "error: could not eval argument '${arg}'. exiting..."
         exit 1

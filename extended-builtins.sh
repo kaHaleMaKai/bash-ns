@@ -14,24 +14,25 @@ function import-ns() {
     private_token='__'
     replace_str=''
     sed_args=''
-    set -- $(<"$file" grep -v '\<private;[[:space:]]\+\<function\>' | grep -o '\<function[[:space:]]\+\<[a-zA-Z_][a-zA-Z0-9_\-]*\>')
+    set -- $(<"$file" grep -v '^[[:space:]]*private;' |
+                      grep -o '\(\<function[[:space:]]\+\<[a-zA-Z_][a-zA-Z0-9_\-]*\>\|\<[a-zA-Z_][a-zA-Z0-9_\-]*[[:space:]]*()\)')
 
     while (( $# )); do
-      if [ "$1" != 'function' -a "${1:0:2}" != '__' ]; then
-        sed_args="${sed_args};s/([^a-zA-Z0-9_])(\<${1}\>)([^a-zA-Z0-9_.#/-])/\1${namespace}\2\3/g"
+      if [ "$1" != 'function' -a "$1" != '()' -a "${1:0:2}" != '__' ]; then
+        sed_args="${sed_args};s/([^a-zA-Z0-9_.#:\"'/-]|^)(\<${1}\>)([^a-zA-Z0-9_.#/-])/\1${namespace}\2\3/g"
       fi
       shift
     done
 
-    set -- $(<"$file" grep '\<private;[[:space:]]\+\<function\>' | grep -o '\<function[[:space:]]\+\<[a-zA-Z_][a-zA-Z0-9_\-]*\>')
+    set -- $(<"$file" grep    '^[[:space:]]*private;' |
+                      grep -o '\(\<function[[:space:]]\+\<[a-zA-Z_][a-zA-Z0-9_\-]*\>\|\<[a-zA-Z_][a-zA-Z0-9_\-]*[[:space:]]*()\)')
 
     while (( $# )); do
-      if [ "$1" != 'function' -a "${1:0:2}" != '__' ]; then
-        sed_args="${sed_args};s/([^a-zA-Z0-9_.#:\"'/-])(\<${1}\>)([^a-zA-Z0-9_.#:\"'/-])/\1${private_token}\2\3/g"
+      if [ "$1" != 'function' -a "$1" != '()' -a "${1:0:2}" != '__' ]; then
+        sed_args="${sed_args};s/([^a-zA-Z0-9_.#:\"'/-]|^)(\<${1}\>)([^a-zA-Z0-9_.#:\"'/-])/\1${private_token}\2\3/g"
       fi
       shift
     done
-
     if [ "$sed_args" != '' ]; then
       source <(<"$file" sed -r "${sed_args}")
     else
@@ -41,10 +42,3 @@ function import-ns() {
 }
 
 function private() { :; }
-
-function export-into-ns() {
-  while (( $# )); do
-    export "$1"
-    shift
-  done
-}
