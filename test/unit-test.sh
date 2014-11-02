@@ -1,21 +1,15 @@
 #!/bin/bash
-source ../extended-builtins.sh
 
-alerts_address='adition-pa-alerts@performance-media.de'
-addresses="lars.winderling@performance-advertising, rw@performance-media.de, ${alerts_address}"
-header="From: ${alerts_address}"
-subject='Adition tagging alert'
-footer="This message has been automatically generated to inform you about the adition tagging being slow."
+DIR="$(dirname $(readlink -f ${BASH_SOURCE[0]:-$0}))"
+cd "${DIR}"
+
+source ../extended-builtins.sh
 
 import-ns ../helpers.sh helpers
 
-helpers.parse-arguments $@
-helpers.require-argument last_alert
-helpers.require-argument log
-helpers.require-argument max_fails
-helpers.require-argument timeout
-helpers.require-argument interval
-helpers.require-argument nr_of_runs
+set -- "arg1=1" "--arg2=2" "-arg3=3" "-"
 
-helpers.check-for-absent-arguments
+helpers.parse-arguments "$@"
+helpers.require-arguments arg1 arg2 arg3 arg4
 
+helpers.ascii-date
