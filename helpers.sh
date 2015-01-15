@@ -28,7 +28,7 @@ function require-arguments {
 # assignments are evaluated
 
 private; function parse-argument() {
-  var="$(echo ${1} | sed 's/^\(-*\)\([^=-]*\)\(=*.*\)$/\2/')"
+  var="$(echo ${1} | sed 's/^\(-*\)\([a-zA-Z_][a-zA-Z0-9_]*\)\(=*.*\)$/\2/')"
   if [[ -z "$var" ]]; then
     echo "expression '$1' is not a valid identifier for a variable" >&2
     exit 1
@@ -37,10 +37,7 @@ private; function parse-argument() {
   # if arg contains an =-token, we export arg=value
   if [[ "${1}" == *=* ]]; then
     vals="$(echo ${1} | sed 's/\(^-*\)\([^=-]*\)\(=\)\(.*\)/\4/')"
-    eval "${var}=''"
-    for val in $vals; do
-      eval "${var}=\$(echo \${${var}} ${val})"
-    done
+    eval "${var}"='${vals}'
   # else we assume it to be a flag and export it with value 1
   else
     eval "${var}=1"
@@ -63,6 +60,14 @@ function ascii-ts() {
   date +'%Y-%m-%d %H:%M:%S' "$@"
 }
 
+function unix-to-ascii() {
+  helpers.ascii-ts --date="@${*}"
+}
+
+function ascii-to-unix() {
+  helpers.unix-ts --date="${*}"
+}
+
 function ascii-date() {
   date +'%Y-%m-%d' "$@"
 }
@@ -75,12 +80,35 @@ function unix-ts() {
   date +'%s' "$@"
 }
 
-# TODO: function date-diff, taking care of ascii/unix-ts conversion before subtraction etc.
-function diff-ts() {
-  lhs="$(date '%s' -d ${1})"
-  rhs="$(date '%s' -d ${2})"
-  echo "$(( lhs - rhs ))"
+function is-ascii-date() {
+  echo "$*" |
+    egrep '(19[7-9][0-9]|2[0-2][0-9][0-9])-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])' >/dev/null 2>&1
 }
+
+function is-ascii-time() {
+  echo "$*" |
+    egrep '([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]' >/dev/null 2>&1
+}
+
+function is-ascii-ts() {
+  date="$(echo $* | cut -d' ' -f1)"
+  time="$(echo $* | cut -d' ' -f2)"
+  is-ascii-date "$date" && is-ascii-time "$time"
+}
+
+# TODO: function date-diff, taking care of ascii/unix-ts conversion before subtraction etc.
+  #lhs=$(ascii-to-unix "${1}")
+  #rhs=$(ascii-to-unix "${2}")
+  #ascii-time --date="$(( diff % 86400 ))"
+#}
+
+#function datediff() {
+  #lhs=$(ascii-to-unix "${1}")
+  #rhs=$(ascii-to-unix "${2}")
+  #diff="$(( lhs - rhs ))"
+  #days="$(( diff / 86400 ))"
+  #echo "${days}"
+#}
 
 function register-flag() {
   flag="$(echo ${1} | sed 's/^\(-*\)\([^=-]*\)\(=*.*\)$/\2/')"
@@ -100,3 +128,4 @@ function register-flags() {
     shift
   done
 }
+
