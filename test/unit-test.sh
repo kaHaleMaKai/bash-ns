@@ -14,10 +14,9 @@ function assert_equal() {
   fi
 }
 
-set -- --host=padb1-test --dumpdir=.
+set -- '--host=padb1-test' '--dumpdir=.'
 helpers.parse-arguments "$@"
-helpers.require-arguments host dumpdir x
-echo hello
+helpers.require-arguments host dumpdir
 
 set -- "arg1=1" "--arg2=2" "-arg3=3" "-arg4=a1 a2 a3 a4"
 

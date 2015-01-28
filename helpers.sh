@@ -68,11 +68,11 @@ function parse-arguments() {
 }
 
 function arg-is-defined() {
-  [[ "${__ARGS__[$1]+1}" ]]
+  [[ "${__ARGS__[$1]:+1}" ]]
 }
 
 function arg-is-not-defined() {
-  [[ "${__ARGS__[$1]-1}" ]]
+  [[ ! "${__ARGS__[$1]:+1}" ]]
 }
 
 function when-arg() {
