@@ -1,10 +1,11 @@
+declare -gA __ARGS__
+
 private; function check-for-absent-arguments() {
   for arg in $required_args; do
-    [[ -z "$(eval echo \$$(echo ${arg}))" ]] &&
-      echo "error: argument '${arg}' was not set. exiting..." &&
+    arg-is-not-defined "${arg}" &&
+      echo "error: argument '${arg}' was not set. exiting..." >&2 &&
       exit 1
   done
-  return 0
 }
 
 private; function require-argument () {
@@ -12,6 +13,7 @@ private; function require-argument () {
 }
 
 function require-arguments {
+  required_args=''
   while (( "$#" )); do
     require-argument "$1"
     shift
@@ -28,21 +30,30 @@ function require-arguments {
 # assignments are evaluated
 
 private; function parse-argument() {
-  var="$(echo ${1} | sed 's/^\(-*\)\([a-zA-Z_][a-zA-Z0-9_]*\)\(=*.*\)$/\2/')"
-  if [[ -z "$var" ]]; then
+  var_and_vals="$(echo ${1} | sed 's/^\(-*\)\([^=]*\)\(=*\)\(.*\)$/\2 \4/')"
+
+  var="${var_and_vals/ *}"
+  vals="${var_and_vals#* }"
+
+  if [[ ! "$var" =~  ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
     echo "expression '$1' is not a valid identifier for a variable" >&2
     exit 1
   fi
 
   # if arg contains an =-token, we export arg=value
-  if [[ "${1}" == *=* ]]; then
-    vals="$(echo ${1} | sed 's/\(^-*\)\([^=-]*\)\(=\)\(.*\)/\4/')"
-    eval "${var}"='${vals}'
+  if [[ ${#vals} -gt 0 && ! "${vals}" =~ ^[[:space:]]*$ ]]; then
+    local type='a'
+    eval "${var}=''"
+    while read -r val; do
+      eval "${var}=\$(echo \${${var}} ${val})"
+    done <<< $vals
   # else we assume it to be a flag and export it with value 1
   else
+    local type='f'
     eval "${var}=1"
   fi
   export "${var}"
+  __ARGS__["${var}"]="t:$type v:${!var}"
 }
 
 # parse multiple arguments
@@ -54,6 +65,34 @@ function parse-arguments() {
     parse-argument "${1}"
     shift
   done
+}
+
+function arg-is-defined() {
+  [[ "${__ARGS__[$1]+1}" ]]
+}
+
+function arg-is-not-defined() {
+  [[ "${__ARGS__[$1]-1}" ]]
+}
+
+function when-arg() {
+  if [[ "$2" = 'then' ]]; then
+    arg-is-defined "$1" && ${@:3}
+  fi
+}
+
+function when-not-arg() {
+  if [[ "$2" = 'then' ]]; then
+    arg-is-defined "$1" || ${@:3}
+  fi
+}
+
+function type-of-arg() {
+  echo "${__ARGS__[$1]:2:1}"
+}
+
+function val-of-arg() {
+  echo "${__ARGS__[$1]#* v:}"
 }
 
 function ascii-ts() {
