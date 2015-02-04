@@ -8,17 +8,38 @@ private; function check-for-absent-arguments() {
   done
 }
 
-private; function require-argument () {
+private; function _require-argument () {
   export required_args="${required_args} ${1}"
 }
 
 function require-arguments {
   required_args=''
   while (( "$#" )); do
-    require-argument "$1"
+    _require-argument "$1" 
     shift
   done
   check-for-absent-arguments
+}
+
+function require-argument() {
+  require-arguments "$@"
+}
+
+function allow-one-of() {
+  num_args_found=0
+  args="$@"
+  while (( "$#" )); do
+      arg-is-defined "$1" &&
+      ((num_args_found=num_args_found+1)) || true
+    shift
+  done
+  if [[ $num_args_found -eq 0 ]]; then
+    echo "error: not found any arguments of [${args}]. exiting..." >&2
+    exit 1
+  elif [[ $num_args_found -gt 1 ]]; then 
+    echo "error: found ${num_args_found} arguments of [${args}], but only 1 allowed. exiting..." >&2
+    exit 1
+  fi
 }
 
 # parse an argument into variables
