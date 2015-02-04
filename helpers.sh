@@ -1,5 +1,14 @@
 declare -gA __ARGS__
 
+function command-defined() {
+  hash "$@" >/dev/null 2>&1
+}
+
+function command-not-defined() {
+  hash "$@" >/dev/null 2>&1
+  [[ $? -gt 0 ]]
+}
+
 private; function check-for-absent-arguments() {
   for arg in $required_args; do
     arg-is-not-defined "${arg}" &&
