@@ -1,0 +1,27 @@
+[mydumper]
+bin_dir = /root/bin
+outputdir = /srv/mysql-backup/mydumper
+logfile = /srv/mysql-backup/mydumper/mydumper.log
+threads = 15
+verbose = 3
+regex = '^(?(?=test\.)$|.*)'
+no-locks = On
+build-empty-files = On
+
+[dump-rest]
+bin_dir = /root/bin/views-triggers-routines-grants
+program_dir  = /root/bin/views-trigers-routines-grants
+dmup_dir = /srv/mysql-backup/mydumpe/views-triggers-routinesr
+log_dir  = /srv/mysql-backup/mydumper/views-triggers-routines
+threads      = 20
+
+[restore-rest]
+bin_dir = /root/bin/views-triggers-routines-grants
+program_dir  = /root/bin/views-trigers-routines-grants
+dump_dir     = /mnt/ssd-raid5-main1/backup/mydumper/views-triggers-routines
+log_dir      = /mnt/ssd-raid5-main1/backup/mydumper/views-triggers-routines
+iterations   = 10
+threads      = 10
+
+[bash-ns]
+path = /root/bin/bash-ns
