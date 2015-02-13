@@ -1,6 +1,5 @@
 source extended-builtins.sh
-declare -a __CONFIG_SECTIONS__
-declare -A __CONFIG__
+import-ns hashmaps as maps
 
 private; function get-awk-flavor() {
   flavor="$(awk -W version 2>/dev/null |
@@ -18,7 +17,7 @@ private; function get-awk-flavor() {
   echo $identifier
 }
 
-function parse-config() {
+private; function parse() {
   awk \
     'BEGIN { sections_found = 0;
              was_error = 0;
@@ -57,4 +56,30 @@ function parse-config() {
           else {
             for (i = 1; i <= len; ++i) {
               print args[i]; } } }'
+}
+
+function print-args() {
+  local section="$1"
+  local prefix="${2:---}"
+  local delim="${3:-=}"
+  local key
+  for key in $(maps.keys conf "$section"); do
+    local val="$(maps.get-in conf "$section" "$key")"
+    local ls="${prefix}${key}"
+    if [[ -z "$val" ]]; then
+      local rs=''
+    else
+      local rs="${delim}${val}"
+    fi
+    echo -n "${ls}${rs} "
+  done
+}
+
+function parser() {
+  maps.new conf
+  while IFS=$'\n' read line; do
+    read -r section var val <<< $line
+    maps.new-in conf "$section" "$var"
+    maps.assoc-in conf "$section" "$var" "$val"
+  done < <(<"$@" parse)
 }

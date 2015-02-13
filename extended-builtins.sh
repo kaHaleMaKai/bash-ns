@@ -1,14 +1,15 @@
-#!/bin/bash
-
 function import-ns() {
   if [ $# -eq 0 ]; then
     echo "error in function 'ns': no arguments given"
   else
-    file="$1"
+    file="${1/%.sh}.sh"
     shift
+    if [[ "$1" == 'as' ]]; then
+      shift
+    fi
     namespace="$1"
     shift
-    cat_file="$1"
+    cat_file="${1:-}"
   fi
 
   if [ "${namespace}" = '' ]; then
