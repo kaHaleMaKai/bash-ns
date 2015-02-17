@@ -1,4 +1,3 @@
-source extended-builtins.sh
 import-ns hashmaps as maps
 
 private; function get-awk-flavor() {
@@ -63,6 +62,7 @@ function print-args() {
   local prefix="${2:---}"
   local delim="${3:-=}"
   local key
+  local args=''
   for key in $(maps.keys conf "$section"); do
     local val="$(maps.get-in conf "$section" "$key")"
     local ls="${prefix}${key}"
@@ -71,8 +71,11 @@ function print-args() {
     else
       local rs="${delim}${val}"
     fi
-    echo -n "${ls}${rs} "
+    # echo -n "${ls}${rs} "
+    printf -v args "${args} %q" "$key"
   done
+  printf '%q ' $args
+  return 0
 }
 
 function parser() {

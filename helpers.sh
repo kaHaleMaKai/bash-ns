@@ -12,9 +12,10 @@ function command-not-defined() {
 private; function check-for-absent-arguments() {
   for arg in $required_args; do
     arg-is-not-defined "${arg}" &&
-      echo "error: argument '${arg}' was not set. exiting..." >&2 &&
+      echo "[ERROR] argument '${arg}' was not set. exiting..." >&2 &&
       exit 1
   done
+  return 0
 }
 
 private; function _require-argument () {
@@ -91,7 +92,7 @@ private; function parse-argument() {
 # to be used as 'parse_arguments "$@"'
 
 function parse-arguments() {
-  while (( "$#" )); do
+  while (( $# )); do
     parse-argument "${1}"
     shift
   done

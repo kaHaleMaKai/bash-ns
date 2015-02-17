@@ -1,22 +1,41 @@
+set -euo pipefail
+
+[[  -v __NAMESPACES__ ]] ||
+  declare -Ag __NAMESPACES__
+
 function import-ns() {
   if [ $# -eq 0 ]; then
-    echo "error in function 'ns': no arguments given"
+    echo "[ERROR] function 'import-ns': no arguments given"
   else
     file="${1/%.sh}.sh"
     shift
     if [[ "$1" == 'as' ]]; then
       shift
     fi
-    namespace="$1"
+    __NAMESPACE__="$1"
+
+    [[ -n "${__NAMESPACES__[${__NAMESPACE__}]:-}" ]] &&
+      echo "[WARNING] namespace '${__NAMESPACE__}' has already been included by file '${__NAMESPACES__[${__NAMESPACE__}]}'" >&2 &&
+      return 0
+
     shift
+
+    if [[ ! -f "$file" ]]; then
+      [[ -f "${BASH_NS_PATH:-.}/${file}" ]] &&
+        file="${BASH_NS_PATH:-.}/${file}"  ||
+        (echo "[ERROR] file ${file} not found. exiting..." >&2 &&
+           exit 1)
+    fi
+
     cat_file="${1:-}"
   fi
 
-  if [ "${namespace}" = '' ]; then
-    source "$file"
+  if [ "${__NAMESPACE__}" = '' ]; then
+    echo "[ERROR] it is forbidden to import directly into global namespace (empty string)" >&2
+    exit 1
   else
     tmp_file="$(mktemp)"
-    namespace="${namespace}."
+    namespace="${__NAMESPACE__}."
     private_token="__${RANDOM}__"
     replace_str=''
     sed_args=''
@@ -55,6 +74,9 @@ function import-ns() {
     else
       source "$file"
     fi
+    
+    # save file from which the import occured
+    printf -v "__NAMESPACES__[${__NAMESPACE__}]" '%s' "${file}"
   fi
 }
 
